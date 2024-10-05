@@ -81,11 +81,45 @@ export const POST = async (request: NextRequest) => {
   }
 
   // Coding in lecture
+  const prisma = getPrisma();
+  const foundCourses = await prisma.course.findUnique({
+    where: { courseNo },
+  });
+  if(!foundCourses){
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Course number dose not exist",
+      },{ status : 400}
+    );
+  }
 
+  const enrollment = await prisma.enrollment.findFirst({
+    where: { courseNo: foundCourses.courseNo, studentId },
+  });
+  if (enrollment) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "You already registered this course",
+      },
+      { status: 400 }
+    );
+  }
+
+  const newEnroll = await prisma.enrollment.create({
+    data: {
+      courseNo: foundCourses.courseNo,
+      studentId,
+    },
+  });
+
+  if(newEnroll){
   return NextResponse.json({
     ok: true,
     message: "You has enrolled a course successfully",
   });
+}
 };
 
 // Need review together with drop enrollment form.
